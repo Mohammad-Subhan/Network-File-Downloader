@@ -1,67 +1,77 @@
 import socket
+import json
 
-PORT = 5050
-SERVER = "192.168.3.106"
-ADDR = (SERVER, PORT)
+SERVER_PORT = 5050
+SERVER_HOST = "localhost"  # Main server IP
+ADDR = (SERVER_HOST, SERVER_PORT)
 FORMAT = "utf-8"
 HEADER = 64
-CHUNK_SIZE = 1024
+CHUNK_SIZE = 1048576  # 1MB
 DISCONNECT_MESSAGE = "!DISCONNECT".ljust(HEADER)
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(ADDR)
-client.recv(HEADER)  # recv ACK
-print(f"[CONNECTED] connected to server {SERVER}")
+client.recv(HEADER)  # Initial ACK
 
 
-def send(msg):
+def send_request(file_name):
 
-    # request file
-    client.send(str(len(msg)).ljust(HEADER).encode(FORMAT))
-    client.send(msg.encode(FORMAT))
-    print(f"[SENT] file requested: {msg}")
-    client.recv(HEADER)  # recv ACK
+    # Request file metadata from main server
+    client.send(str(len(file_name)).ljust(HEADER).encode(FORMAT))
+    client.send(file_name.encode(FORMAT))
 
-    if msg == DISCONNECT_MESSAGE:
+    if file_name == DISCONNECT_MESSAGE:
+        client.send(DISCONNECT_MESSAGE.encode(FORMAT))
+        client.close()
         return
 
-    # Receive file name
-    msg_length = int(client.recv(HEADER).decode(FORMAT))
-    file_name = client.recv(msg_length).decode(FORMAT)
+    client.recv(HEADER)  # ACK from main server
 
-    if file_name == "ERROR":
-        print(f"[ERROR] file not found")
-        return
+    # Receive chunk info from main server
+    chunk_info_size = client.recv(HEADER).decode(FORMAT)
+    chunk_info = client.recv(int(chunk_info_size)).decode(FORMAT)
+    chunk_info = json.loads(chunk_info)
+    print(f"[RECEIVED] chunk info: {chunk_info}")
+    client.send(b"ACK".ljust(HEADER))  # ACK chunk info
 
-    client.send(b"ACK".ljust(HEADER))  # send ACK
-    print(f"[RECEIVED] file name: {file_name}")
+    # Download chunks from worker servers
+    for chunk in chunk_info:
+        worker_info = chunk["worker"]
+        chunk_size = chunk["size"]
+        print(
+            f"[INFO] Downloading from {worker_info["id"]} for chunk {chunk["chunk_id"]}"
+        )
+        download_chunk(worker_info, chunk["chunk_id"], chunk_size)
 
-    # Receive file size
-    msg_length = int(client.recv(HEADER).decode(FORMAT))
-    file_size = client.recv(msg_length).decode(FORMAT)
-    client.send(b"ACK".ljust(HEADER))  # send ACK
-    print(f"[RECEIVED] file size: {file_size}")
+    # client.send(DISCONNECT_MESSAGE.encode(FORMAT))  # Send disconnect message
 
-    file_bytes = b""
-    # Receive file data
-    try:
-        file = open(file_name, "wb")
+
+def download_chunk(worker_info, chunk_id, chunk_size):
+    worker_server = worker_info["address"]  # IP for worker
+    worker_port = worker_info["port"]  # port for worker
+    worker_addr = (worker_server, worker_port)
+
+    worker = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    worker.connect(worker_addr)
+    worker.recv(HEADER)  # Initial ACK
+
+    worker.send(str(len(str(chunk_id))).ljust(HEADER).encode(FORMAT))  # Request chunk
+    worker.send(str(chunk_id).encode(FORMAT))  # Request chunk
+    worker.recv(HEADER)  # ACK chunk ID
+
+    # Receive the chunk from the worker server
+    chunk_data = worker.recv(CHUNK_SIZE)
+    with open(f"received_chunk_{chunk_id}.txt", "wb") as f:
         while True:
-            data = client.recv(CHUNK_SIZE)
-            file_bytes += data
-            if b"<END>" in file_bytes:
-                file_bytes = file_bytes[:-5]
+            data = worker.recv(CHUNK_SIZE)
+            chunk_data += data
+            if b"<END>" in chunk_data:
+                chunk_data = chunk_data[:-5]
                 break
 
-        file.write(file_bytes)
-        print(f"[RECEIVED] file recieved")
-        client.send(b"ACK".ljust(HEADER))  # send ACK
-        file.close()  # Close file
-
-    except Exception as e:
-        print(f"[ERROR] {e}")
+    print(f"[RECEIVED] Chunk {chunk_id} downloaded from {worker_server}:{worker_port}")
+    worker.close()
 
 
-send("test.cpp")  # send file name
-send(DISCONNECT_MESSAGE)  # send disconnect message
-client.close()  # Close connection
+send_request("test.txt")
+send_request(DISCONNECT_MESSAGE)
