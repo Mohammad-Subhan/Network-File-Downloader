@@ -2,6 +2,7 @@ import os
 import socket
 import threading
 
+
 PORT = 5050
 SERVER = socket.gethostbyname(socket.gethostname())
 ADDR = (SERVER, PORT)
@@ -37,8 +38,8 @@ def handle_client(conn, addr):
             print(f"[RECEIVED] file name recieved: {file_name}")
             conn.send(b"ACK".ljust(HEADER))  # send ACK
             try:
-                file = open(file_name, "rb")
-                file_size = os.path.getsize(file_name)
+                file = open(f"../data/{file_name}", "rb")
+                file_size = os.path.getsize(f"../data/{file_name}")
             except FileNotFoundError:
                 print(f"[ERROR] file not found")
                 conn.send(str(len("ERROR")).ljust(HEADER).encode(FORMAT))

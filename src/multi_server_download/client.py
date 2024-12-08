@@ -28,11 +28,11 @@ def send_file_request(file_name):
         thread.join()
 
     try:
-        data_chunk_1 = open(f"chunk_1_{file_name}", "rb").read()
-        data_chunk_2 = open(f"chunk_2_{file_name}", "rb").read()
-        data_chunk_3 = open(f"chunk_3_{file_name}", "rb").read()
+        data_chunk_1 = open(f"../data/chunks/chunk_1_{file_name}", "rb").read()
+        data_chunk_2 = open(f"../data/chunks/chunk_2_{file_name}", "rb").read()
+        data_chunk_3 = open(f"../data/chunks/chunk_3_{file_name}", "rb").read()
 
-        with open(f"received_{file_name}", "wb") as f:
+        with open(f"../data/received_{file_name}", "wb") as f:
             f.write(data_chunk_1)
             f.write(data_chunk_2)
             f.write(data_chunk_3)
@@ -72,7 +72,9 @@ def download_chunk(chunk):
 
             # Receive the chunk from the worker server
             chunk_data = b""
-            with open(f"chunk_{chunk["chunk_id"]}_{chunk["file_name"]}", "wb") as f:
+            with open(
+                f"../data/chunks/chunk_{chunk["chunk_id"]}_{chunk["file_name"]}", "wb"
+            ) as f:
                 while True:
                     data = worker.recv(CHUNK_SIZE)
                     chunk_data += data
@@ -97,7 +99,7 @@ def download_chunk(chunk):
 
 
 def get_chunk_info(file_name):
-    file_size = os.path.getsize(file_name)
+    file_size = os.path.getsize(f"../data/{file_name}")
     num_chunks = len(WORKER_SERVERS)  # Number of chunks to split the file into
     chunk_size = file_size // num_chunks  # Base chunk size
     remainder = file_size % num_chunks  # Extra bytes to distribute
@@ -130,4 +132,4 @@ def get_chunk_info(file_name):
     return chunk_info
 
 
-send_file_request("test.mp4")
+send_file_request("test.cpp") # Request the file

@@ -23,12 +23,12 @@ def handle_client(conn, addr):
         chunk_info = json.loads(chunk_info)
 
         file_name = chunk_info["file_name"]
-        file_size = os.path.getsize(file_name)
+        file_size = os.path.getsize(f"../data/{file_name}")
         chunk_size = chunk_info["size"]
         chunk_id = chunk_info["chunk_id"]
         total_chunks = chunk_info["total_chunks"]
 
-        file = open(file_name, "rb")
+        file = open(f"../data/{file_name}", "rb")
         for i in range(chunk_id):
             if i == total_chunks - 1:
                 data = file.read(chunk_size + file_size % total_chunks)
