@@ -22,8 +22,8 @@ This project implements a system for downloading large files from multiple serve
     ├── /src 
     │ ├── /data 
     │ │ ├── /chunks 
-    │ │ ├── /received_test.cpp 
-    │ │ └── /test.cpp 
+    │ │ ├── /received_test.txt (example) 
+    │ │ └── /test.txt (example) 
     │ ├── /single_server_download 
     │ │ ├── /client.py 
     │ │ └── /server.py 
