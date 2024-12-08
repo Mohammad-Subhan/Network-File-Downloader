@@ -7,7 +7,6 @@ This project implements a system for downloading large files from multiple serve
 - **Single Server Download**: Download a file from a single server using TCP connections.
 - **Multi-Server Download**: Download file fragments from multiple servers in parallel using file segmentation and recombination.
 - **Server Failure Handling**: In case of a server failure, the client retries downloading the file fragment from another available server.
-- **Download Resuming**: The system allows for download resumption if interrupted.
 
 ## Requirements
 
