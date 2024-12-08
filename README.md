@@ -39,7 +39,7 @@ This project implements a system for downloading large files from multiple serve
 
 1. Clone the repository:
     ```bash
-    git clone https://github.com/yourusername/Network-File-Downloader.git
+    git clone https://github.com/Mohammad-Subhan/Network-File-Downloader.git
     cd Network-File-Downloader
     ```
 
