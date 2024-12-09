@@ -4,12 +4,13 @@ import threading
 
 
 PORT = 5050
-SERVER = socket.gethostbyname(socket.gethostname())
+SERVER = "localhost"
 ADDR = (SERVER, PORT)
 FORMAT = "utf-8"
 HEADER = 64
-CHUNK_SIZE = 1024
-DISCONNECT_MESSAGE = "!DISCONNECT".ljust(HEADER).encode(FORMAT)
+CHUNK_SIZE = 1024 * 1024 * 10  # 10MB
+DISCONNECT_MESSAGE = "!DISCONNECT"
+REQUEST_FILES = "--rf"
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
@@ -26,11 +27,33 @@ def handle_client(conn, addr):
         msg = conn.recv(msg_length).decode(FORMAT)
 
         # Check if client disconnected
-        if msg == DISCONNECT_MESSAGE.decode(FORMAT):
+        if msg == DISCONNECT_MESSAGE:
             connected = False
             print(f"[DISCONNECTED] {addr} client disconnected")
+            conn.send(b"ACK".ljust(HEADER))  # send ACK
             conn.close()
             break
+
+        elif msg == REQUEST_FILES:
+            print(f"[RECEIVED] file names requested")
+            conn.send(b"ACK".ljust(HEADER))  # send ACK
+
+            # Get only files
+            directory = "../data"
+            files = [
+                f
+                for f in os.listdir(directory)
+                if os.path.isfile(os.path.join(directory, f))
+            ]
+
+            # Send file names
+            file_names = f"\n".join(files)
+            conn.send(str(len(file_names)).ljust(HEADER).encode(FORMAT))
+            conn.send(file_names.encode(FORMAT))
+            conn.recv(HEADER)  # recv ACK
+            print("[SENT] file names sent")
+
+            continue
 
         # Check if file exists
         if msg:
@@ -47,8 +70,8 @@ def handle_client(conn, addr):
                 continue
 
             # Send file name and size
-            conn.send(str(len(f"received_{file_name}")).encode(FORMAT).ljust(HEADER))
-            conn.send(f"received_{file_name}".encode(FORMAT))
+            conn.send(str(len(f"{file_name}")).encode(FORMAT).ljust(HEADER))
+            conn.send(f"{file_name}".encode(FORMAT))
             conn.recv(HEADER)  # recv ACK
             print(f"[SENT] file name sent: received_{file_name}")
 

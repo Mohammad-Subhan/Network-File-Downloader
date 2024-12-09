@@ -1,6 +1,6 @@
 # Network File Downloader
 
-This project implements a system for downloading large files from multiple servers simultaneously. The file is fragmented on the servers, and the client downloads the fragments in parallel, recombining them into a complete file on completion. The system also handles server failure and supports load balancing.
+This project implements a system for downloading files from single server and multiple servers. When downloading from multiple servers the chunk size for each server is calculated on the client and the client sends the chunk data to respective server for downloading. Then the client downloads the fragments in parallel, recombine them into a complete file on completion. The system also handles server failure and supports load balancing.
 
 ## Features
 
@@ -10,9 +10,7 @@ This project implements a system for downloading large files from multiple serve
 
 ## Requirements
 
-- Python 3.x
-- Python socket library
-- Threading for concurrent operations
+- Python
 - Basic file system setup to store downloaded chunks
 
 ## Project Structure
@@ -21,16 +19,17 @@ This project implements a system for downloading large files from multiple serve
     /Network-File-Downloader
     ├── /src 
     │ ├── /data 
-    │ │ ├── /chunks 
-    │ │ ├── /received_test.txt (example) 
-    │ │ └── /test.txt (example) 
-    │ ├── /single_server_download 
-    │ │ ├── /client.py 
-    │ │ └── /server.py 
-    │ ├── /multi_server_download 
-    │ │ ├── /client.py 
-    │ │ ├── /start_worker.py 
-    │ │ └── /worker_server.py 
+    │ │ ├── /chunks (contains file chunks temporarily) 
+    │ │ ├── /received (contains the received files) 
+    │ │ └── /<file_name.extension>
+    │ ├── /single_server_download
+    │ │ ├── /client.py
+    │ │ └── /server.py
+    │ ├── /multi_server_download
+    │ │ ├── /client.py
+    │ │ ├── /server.py
+    │ │ ├── /start_worker.py
+    │ │ └── /worker_server.py
     ├── /.gitignore 
     ├── /LICENSE 
     ├── /README.md
@@ -41,11 +40,6 @@ This project implements a system for downloading large files from multiple serve
     ```bash
     git clone https://github.com/Mohammad-Subhan/Network-File-Downloader.git
     cd Network-File-Downloader
-    ```
-
-2. Install dependencies (if any, although this project relies on Python's built-in libraries):
-    ```bash
-    pip install -r requirements.txt
     ```
 
 ## Usage
@@ -64,15 +58,31 @@ This project implements a system for downloading large files from multiple serve
    
 2. **Start the client**:
    - In another terminal window, navigate to the `src/single_server_download` directory.
-   - Add the file name at the end of the file.
-   - Run the client:
      ```bash
-     python client.py
+     cd src/single_server_download
+     ```
+   - First request the available files using the command.
+     ```bash
+     python client.py --rf
+     ```
+   - From the available files, request a file using he command:
+     ```bash
+     python client.py <filename>
      ```
 
 ### Multi-Server Download
 
-1. **Start the worker servers**:
+1. **Start the main server**:
+   - Navigate to the `src/multi_server_download` directory.
+     ```bash
+     cd src/multi_server_download
+     ```
+   - Run the main server:
+     ```bash
+     python server.py
+     ```
+
+2. **Start the worker servers**:
    - Navigate to the `src/multi_server_download` directory.
      ```bash
      cd src/multi_server_download
@@ -82,17 +92,23 @@ This project implements a system for downloading large files from multiple serve
      python start_worker.py
      ```
 
-2. **Start the client**:
-   - In another terminal window, navigate to the `src/multi_server_download` directory.
-   - Add the file name at the end of the file.
-   - Run the client to download the file:
+3. **Start the client**:
+   - In another terminal window, navigate to the `src/single_server_download` directory.
      ```bash
-     python client.py
+     cd src/single_server_download
+     ```
+   - First request the available files from the main server using the command.
+     ```bash
+     python client.py --rf
+     ```
+   - From the available files, request a file using he command:
+     ```bash
+     python client.py <filename>
      ```
 
 ### File Segmentation
 
-In multi-server downloading, files are segmented into chunks and downloaded concurrently. The `client.py` divides the file into chunks and requests each chunk from different worker servers. Once the chunks are downloaded, the client recombines them into the original file.
+In multi-server downloading, files are downloaded in chunks concurrently. The `client.py` divides the file into chunks and requests each chunk from different worker servers. Once the chunks are downloaded, the client recombines them into the original file.
 
 ### Server Failure Handling
 
@@ -100,8 +116,4 @@ In case of a worker server failure, the client will automatically retry download
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgements
-
-- This project utilizes Python's socket programming and threading modules.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) for details.

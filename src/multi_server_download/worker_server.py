@@ -5,7 +5,7 @@ import threading
 
 FORMAT = "utf-8"
 HEADER = 64
-CHUNK_SIZE = 1048576  # 1MB
+CHUNK_SIZE = 1024 * 1024 * 10  # 10MB
 DISCONNECT_MESSAGE = "!DISCONNECT".ljust(HEADER).encode(FORMAT)
 SERVER = "localhost"
 
@@ -30,8 +30,9 @@ def handle_client(conn, addr):
 
         file = open(f"../data/{file_name}", "rb")
         for i in range(chunk_id):
+            print(chunk_id, file.tell())
             if i == total_chunks - 1:
-                data = file.read(chunk_size + file_size % total_chunks)
+                data = file.read(file_size - file.tell())
             else:
                 data = file.read(chunk_size)
 

@@ -8,6 +8,7 @@ WORKER_SERVERS = [
     {"id": "1", "address": "localhost", "port": 5051},
     {"id": "2", "address": "localhost", "port": 5052},
     {"id": "3", "address": "localhost", "port": 5053},
+    {"id": "4", "address": "localhost", "port": 5054},
 ]
 
 threads = []
